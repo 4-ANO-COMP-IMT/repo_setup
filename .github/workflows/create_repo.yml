@@ -61,7 +61,7 @@ jobs:
           description=$(echo $description | tr -d '\n')
 
           privacy_type="public"
-          project_template= "base_repo_template"
+          project_template="base_repo_template"
 
           team=$(grep -A 2 "### team" project_details.txt | tail -n 1)
           team=$(echo $team | tr -d '\r')
