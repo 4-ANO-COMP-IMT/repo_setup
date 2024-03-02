@@ -1,33 +1,33 @@
 name: Repo Creation Issue
 description: Create a new repository
-title: "[NEW_REPO]: Create a new repository in Maua-Dev"
+title: "[NEW_REPO]: Criação de um novo repositório"
 labels: ["project"]
 body:
   - type: markdown
     attributes:
       value: |
-        To create a new repository, please fill out the following information. Please note that the project name must be unique and the description must be clear and concise. Do not change the issue title starting with [NEW_REPO].
+        Para criar um novo repositório, preencha as seguintes informações. Por favor, note que o nome do projeto deve ser único e a descrição deve ser clara e concisa. Não altere o título do problema começando com [NEW_REPO].
   - type: input
     id: project_name
     attributes:
       label: project_name
-      description: What is the name of the project?
-      placeholder: ex. devmaua_setup
+      description: Qual é o nome do projeto?
+      placeholder: ex. meu_novo_projeto
     validations:
       required: true
   - type: textarea
     id: description
     attributes:
       label: description
-      description: What is the project about?
-      placeholder: ex. This project is about...
+      description: Sobre o que é o projeto?
+      placeholder: ex. Este projeto é sobre...
     validations:
       required: true
   - type: dropdown
     id: privacy_type
     attributes:
       label: privacy_type
-      description: What is the privacy type of the project?
+      description: Qual é o tipo de privacidade do repositório?
       options:
         - public
         - private
@@ -37,7 +37,7 @@ body:
     id: project_template
     attributes:
       label: project_template
-      description: What template will be used?
+      description: De qual modelo de projeto você gostaria de começar?
       options:
         - clean_mss_template (PYTHON)
         - battlesnake_fastapi_template (PYTHON)
@@ -53,7 +53,7 @@ body:
     id: team
     attributes:
       label: team
-      description: What team will be added to the project?
+      description: Qual equipe será responsável por este projeto?
       options:
         - Back-end
         - Front-end
