@@ -37,7 +37,7 @@ jobs:
 
           if [ "$response" != "" ]; then
             echo "User is not a member of the organization"
-            gh issue comment ${{ github.event.issue.number }} -b "Hi @$USERNAME, you are not a member of the organization. Please join the organization before creating a new repo.  "
+            gh issue comment ${{ github.event.issue.number }} -b "Oi, @$USERNAME, você não é membro da organização. "
             gh issue close ${{ github.event.issue.number }}  -c "User is not a member of the organization :warning:"
             exit 1
           else
@@ -114,7 +114,7 @@ jobs:
             echo "Verify Repo: $verify_repo"
             if [ "$verify_repo" != "Not Found" ]; then
               echo "Repo already exists"
-              gh issue comment ${{ github.event.issue.number }} -b "Hi @$USERNAME, the repo already exists. Please check the repo name and try again.  "
+              gh issue comment ${{ github.event.issue.number }} -b "Oi, @$USERNAME, um repositório com esse nome já existe. Por favor crie outra issue com o nome diferente. "
               gh issue close ${{ github.event.issue.number }}  -c "Repo already exists :warning:"
               exit 1
             else
@@ -291,7 +291,7 @@ jobs:
         run: |
           echo "Finished creating repo"
 
-          message="Thanks for using the Issue to repo creation! :smile: Now you can find your repo at [${{needs.process_issue.outputs.project_name}}](https://github.com/4-ANO-COMP/${{needs.process_issue.outputs.project_name}}) :rocket:"
+          message="Obrigado por utiliza o repo_setup :smile: Agora você pode encontrar seu repo em [${{needs.process_issue.outputs.project_name}}](https://github.com/4-ANO-COMP/${{needs.process_issue.outputs.project_name}}) :rocket:"
           
           echo "message=$message" >> $GITHUB_ENV
 
