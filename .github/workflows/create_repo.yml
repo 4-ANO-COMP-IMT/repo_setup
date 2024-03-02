@@ -60,10 +60,8 @@ jobs:
           description=$(echo $description | tr -d '\r')
           description=$(echo $description | tr -d '\n')
 
-          privacy_type=$(grep -A 2 "### privacy_type" project_details.txt | tail -n 1)
-          privacy_type=$(echo $privacy_type | tr -d '\r')
-          
-          project_template= base_repo_template
+          privacy_type="public"
+          project_template= "base_repo_template"
 
           team=$(grep -A 2 "### team" project_details.txt | tail -n 1)
           team=$(echo $team | tr -d '\r')

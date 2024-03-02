@@ -24,16 +24,6 @@ body:
     validations:
       required: true
   - type: dropdown
-    id: privacy_type
-    attributes:
-      label: privacy_type
-      description: Qual é o tipo de privacidade do repositório?
-      options:
-        - public
-        - private
-    validations:
-      required: true
-  - type: dropdown
     id: team
     attributes:
       label: team
