@@ -29,7 +29,7 @@ body:
       label: team
       description: Qual equipe será responsável por este projeto?
       options:
-        - Back-end
-        - Front-end
+        - grupo_1
+        - grupo_2
     validations:
       required: false
