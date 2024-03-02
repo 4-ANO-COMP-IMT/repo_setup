@@ -34,22 +34,6 @@ body:
     validations:
       required: true
   - type: dropdown
-    id: project_template
-    attributes:
-      label: project_template
-      description: De qual modelo de projeto você gostaria de começar?
-      options:
-        - clean_mss_template (PYTHON)
-        - battlesnake_fastapi_template (PYTHON)
-        - simple_fastapi_template (PYTHON)
-        - clean_mss_typescript_template (TYPESCRIPT)
-        - clean_flutter_template (FLUTTER)
-        - clean_front_template (REACT)
-        - simple_react_template (REACT)
-        - vite_react_template (REACT)
-    validations:
-      required: false
-  - type: dropdown
     id: team
     attributes:
       label: team
