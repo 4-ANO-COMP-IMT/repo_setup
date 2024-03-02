@@ -63,8 +63,7 @@ jobs:
           privacy_type=$(grep -A 2 "### privacy_type" project_details.txt | tail -n 1)
           privacy_type=$(echo $privacy_type | tr -d '\r')
           
-          project_template=$(grep -A 2 "### project_template" project_details.txt | tail -n 1)
-          project_template=$(echo $project_template | cut -d' ' -f1)
+          project_template= base_repo_template
 
           team=$(grep -A 2 "### team" project_details.txt | tail -n 1)
           team=$(echo $team | tr -d '\r')
