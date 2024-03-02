@@ -143,7 +143,6 @@ jobs:
           fi
           
           gh api -X PUT /orgs/4-ANO-COMP/teams/Admins-repo/repos/4-ANO-COMP/${{needs.process_issue.outputs.project_name}} --raw-field "permission=admin"
-          gh api -X PUT /orgs/4-ANO-COMP/teams/Heads/repos/4-ANO-COMP/${{needs.process_issue.outputs.project_name}} --raw-field "permission=admin"
           
           USERNAME=${{ github.event.issue.user.login }}
 
