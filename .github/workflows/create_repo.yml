@@ -25,24 +25,24 @@ jobs:
           echo "Issue title: ${{ github.event.issue.title }}"
           echo "Issue body: ${{ github.event.issue.body }}"
           
-      # - name: Check Organization Membership
-      #   run: |
-      #     USERNAME=${{ github.event.issue.user.login }}
-      #     ORG_NAME="4-ANO-COMP"
+      - name: Check Organization Membership
+        run: |
+          USERNAME=${{ github.event.issue.user.login }}
+          ORG_NAME="4-ANO-COMP"
           
-      #     # get info from gh api
-      #     response=$(gh api "/orgs/$ORG_NAME/members/$USERNAME" | jq -r '.message')
+          # get info from gh api
+          response=$(gh api "/orgs/$ORG_NAME/members/$USERNAME" | jq -r '.message')
 
-      #     echo "Response: $response"
+          echo "Response: $response"
 
-      #     if [ "$response" != "" ]; then
-      #       echo "User is not a member of the organization"
-      #       gh issue comment ${{ github.event.issue.number }} -b "Hi @$USERNAME, you are not a member of the organization. Please join the organization before creating a new repo.  "
-      #       gh issue close ${{ github.event.issue.number }}  -c "User is not a member of the organization :warning:"
-      #       exit 1
-      #     else
-      #       echo "User is a member of the organization"
-      #     fi
+          if [ "$response" != "" ]; then
+            echo "User is not a member of the organization"
+            gh issue comment ${{ github.event.issue.number }} -b "Hi @$USERNAME, you are not a member of the organization. Please join the organization before creating a new repo.  "
+            gh issue close ${{ github.event.issue.number }}  -c "User is not a member of the organization :warning:"
+            exit 1
+          else
+            echo "User is a member of the organization"
+          fi
           
       - name: Check if issue title starts with [NEW_REPO]
         if: startsWith(github.event.issue.title, '[NEW_REPO]')
