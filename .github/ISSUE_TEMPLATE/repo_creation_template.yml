@@ -1,0 +1,61 @@
+name: Repo Creation Issue
+description: Create a new repository
+title: "[NEW_REPO]: Create a new repository in Maua-Dev"
+labels: ["project"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        To create a new repository, please fill out the following information. Please note that the project name must be unique and the description must be clear and concise. Do not change the issue title starting with [NEW_REPO].
+  - type: input
+    id: project_name
+    attributes:
+      label: project_name
+      description: What is the name of the project?
+      placeholder: ex. devmaua_setup
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: description
+      description: What is the project about?
+      placeholder: ex. This project is about...
+    validations:
+      required: true
+  - type: dropdown
+    id: privacy_type
+    attributes:
+      label: privacy_type
+      description: What is the privacy type of the project?
+      options:
+        - public
+        - private
+    validations:
+      required: true
+  - type: dropdown
+    id: project_template
+    attributes:
+      label: project_template
+      description: What template will be used?
+      options:
+        - clean_mss_template (PYTHON)
+        - battlesnake_fastapi_template (PYTHON)
+        - simple_fastapi_template (PYTHON)
+        - clean_mss_typescript_template (TYPESCRIPT)
+        - clean_flutter_template (FLUTTER)
+        - clean_front_template (REACT)
+        - simple_react_template (REACT)
+        - vite_react_template (REACT)
+    validations:
+      required: false
+  - type: dropdown
+    id: team
+    attributes:
+      label: team
+      description: What team will be added to the project?
+      options:
+        - Back-end
+        - Front-end
+    validations:
+      required: false

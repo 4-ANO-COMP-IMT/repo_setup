@@ -1,0 +1,386 @@
+name: Issue Handler
+
+on:
+  issues:
+    types: opened
+
+jobs:
+  process_issue:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get Token
+        id: get_workflow_token
+        uses: peter-murray/workflow-application-token-action@v2
+        with:
+          application_id: ${{ vars.SETUP_APP_ID }}
+          application_private_key: ${{ secrets.SETUP_APP_PRIVATE_KEY }}
+      - name: Set Token
+        run: |
+          echo "GITHUB_TOKEN=${{ steps.get_workflow_token.outputs.token }}" >> $GITHUB_ENV
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      
+      - name: Print issue title and body
+        run: |
+          echo "Issue title: ${{ github.event.issue.title }}"
+          echo "Issue body: ${{ github.event.issue.body }}"
+          
+      - name: Check Organization Membership
+        run: |
+          USERNAME=${{ github.event.issue.user.login }}
+          ORG_NAME="4-ANO-COMP"
+          
+          # get info from gh api
+          response=$(gh api "/orgs/$ORG_NAME/members/$USERNAME" | jq -r '.message')
+
+          echo "Response: $response"
+
+          if [ "$response" != "" ]; then
+            echo "User is not a member of the organization"
+            gh issue comment ${{ github.event.issue.number }} -b "Hi @$USERNAME, you are not a member of the organization. Please join the organization before creating a new repo.  "
+            gh issue close ${{ github.event.issue.number }}  -c "User is not a member of the organization :warning:"
+            exit 1
+          else
+            echo "User is a member of the organization"
+          fi
+          
+      - name: Check if issue title starts with [NEW_REPO]
+        if: startsWith(github.event.issue.title, '[NEW_REPO]')
+        run: |
+          echo "Processing issue with title starting with [NEW_REPO]"
+          echo "${{ github.event.issue.body }}" > project_details.txt
+
+          project_name=$(grep -A 2 "### project_name" project_details.txt | tail -n 1)
+          project_name=$(echo $project_name | tr -d '\r')
+          project_name=$(echo $project_name | tr ' ' '_')
+          project_name=$(echo $project_name | tr '[:upper:]' '[:lower:]')
+          project_name=$(echo $project_name | sed 's/[^a-zA-Z0-9_]//g')
+
+          description=$(grep -A 2 "### description" project_details.txt | tail -n 1)
+          description=$(echo $description | tr -d '\r')
+          description=$(echo $description | tr -d '\n')
+
+          privacy_type=$(grep -A 2 "### privacy_type" project_details.txt | tail -n 1)
+          privacy_type=$(echo $privacy_type | tr -d '\r')
+          
+          project_template=$(grep -A 2 "### project_template" project_details.txt | tail -n 1)
+          project_template=$(echo $project_template | cut -d' ' -f1)
+
+          team=$(grep -A 2 "### team" project_details.txt | tail -n 1)
+          team=$(echo $team | tr -d '\r')
+          
+          echo "Project Name: $project_name"
+          echo "Description: $description"
+          echo "Privacy Type: $privacy_type"
+          echo "Project Template: $project_template"
+          echo "Team: $team"
+
+          echo "project_name=$project_name" >> $GITHUB_ENV
+          echo "description=$description" >> $GITHUB_ENV
+          echo "privacy_type=$privacy_type" >> $GITHUB_ENV
+          echo "project_template=$project_template" >> $GITHUB_ENV
+          echo "team=$team" >> $GITHUB_ENV
+      
+    outputs:
+      project_name: ${{ env.project_name }}
+      description: ${{ env.description }}
+      privacy_type: ${{ env.privacy_type }}
+      project_template: ${{ env.project_template }}
+      team: ${{ env.team }}
+
+  create_repo:
+    needs: process_issue
+    runs-on: ubuntu-latest
+    if: startsWith(github.event.issue.title, '[NEW_REPO]')
+    env:
+      repo_name: ${{needs.process_issue.outputs.project_name}}
+    steps:
+      - name: Get Token
+        id: get_workflow_token
+        uses: peter-murray/workflow-application-token-action@v2
+        with:
+          application_id: ${{ secrets.SETUP_APP_ID }}
+          application_private_key: ${{ secrets.SETUP_APP_PRIVATE_KEY }}
+
+      - name: Set Token
+        run: |
+          echo "GITHUB_TOKEN=${{ steps.get_workflow_token.outputs.token }}" >> $GITHUB_ENV
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Verify repo
+        run: |
+            USERNAME=${{ github.event.issue.user.login }}
+
+            verify_repo=$(gh api /repos/4-ANO-COMP/${{needs.process_issue.outputs.project_name}} | jq -r '.message')
+            echo "Verify Repo: $verify_repo"
+            if [ "$verify_repo" != "Not Found" ]; then
+              echo "Repo already exists"
+              gh issue comment ${{ github.event.issue.number }} -b "Hi @$USERNAME, the repo already exists. Please check the repo name and try again.  "
+              gh issue close ${{ github.event.issue.number }}  -c "Repo already exists :warning:"
+              exit 1
+            else
+              echo "Repo does not exist"
+            fi
+
+      - name: Create Repo
+        run: |
+          echo "Creating repo: ${{needs.process_issue.outputs.project_name}}"
+          echo "Description: ${{needs.process_issue.outputs.description}}"
+          echo "Privacy Type: ${{needs.process_issue.outputs.privacy_type}}"
+          echo "Project Template: ${{needs.process_issue.outputs.project_template}}"
+
+          if [ "${{needs.process_issue.outputs.project_template}}" == "None" ]; then
+            gh repo create 4-ANO-COMP/${{needs.process_issue.outputs.project_name}} --${{needs.process_issue.outputs.privacy_type}} -d "${{needs.process_issue.outputs.description}}" --add-readme
+          else
+            gh repo create 4-ANO-COMP/${{needs.process_issue.outputs.project_name}} --${{needs.process_issue.outputs.privacy_type}} -d "${{needs.process_issue.outputs.description}}" --template 4-ANO-COMP/${{needs.process_issue.outputs.project_template}}
+            fi
+          gh repo edit 4-ANO-COMP/${{needs.process_issue.outputs.project_name}} --enable-issues --delete-branch-on-merge
+
+          if [ "${{needs.process_issue.outputs.team}}" != "None" ]; then
+            gh api -X PUT /orgs/4-ANO-COMP/teams/${{needs.process_issue.outputs.team}}/repos/4-ANO-COMP/${{needs.process_issue.outputs.project_name}} --raw-field "permission=push"
+          fi
+          
+          gh api -X PUT /orgs/4-ANO-COMP/teams/Admins-repo/repos/4-ANO-COMP/${{needs.process_issue.outputs.project_name}} --raw-field "permission=admin"
+          gh api -X PUT /orgs/4-ANO-COMP/teams/Heads/repos/4-ANO-COMP/${{needs.process_issue.outputs.project_name}} --raw-field "permission=admin"
+          
+          USERNAME=${{ github.event.issue.user.login }}
+
+          gh api \
+            --method PUT \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            /repos/4-ANO-COMP/${{needs.process_issue.outputs.project_name}}/collaborators/$USERNAME\
+            -f permission='admin' 
+
+
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          token: ${{ env.GITHUB_TOKEN }}
+          repository: "4-ANO-COMP/${{needs.process_issue.outputs.project_name}}"
+
+      - name: Add Branch Protection Dev
+        if: ${{startsWith(needs.process_issue.outputs.privacy_type, 'public')}}
+        run: |
+          
+          curl -vv -L \
+            -X PUT \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Authorization: Bearer ${{ env.GITHUB_TOKEN }}"\
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/4-ANO-COMP/$repo_name/branches/dev/protection" \
+            -d '{
+              "required_status_checks": {
+                "strict": true,
+                "contexts": []
+              },
+              "enforce_admins": false,
+              "required_pull_request_reviews": {
+                "dismiss_stale_reviews": false,
+                "require_code_owner_reviews": false,
+                "required_approving_review_count": 1,
+                "require_last_push_approval": false
+              },
+              "restrictions": null,
+              "required_linear_history": false,
+              "allow_force_pushes": false,
+              "allow_deletions": false,
+              "block_creations": false,
+              "required_conversation_resolution": false,
+              "lock_branch": false,
+              "allow_fork_syncing": false
+            }'
+      - name: Create Homolog
+        env: 
+          GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
+        run: |
+          
+          echo "Creating Homolog Branch"
+
+          echo "Getting SHA from dev branch"
+          sha_ref=$(gh api \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "/repos/4-ANO-COMP/$repo_name/git/ref/heads/dev" | jq -r '.object.sha')
+          
+          echo "Creating Homolog Branch"
+          gh api \
+            --method POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "/repos/4-ANO-COMP/$repo_name/git/refs" \
+            -f ref='refs/heads/homolog' \
+            -f sha=$sha_ref
+
+
+      - name: Add Branch Protection Homolog
+        if: startsWith(needs.process_issue.outputs.privacy_type, 'public')
+        run: |
+          echo "Adding Branch Protection Homolog"
+
+          curl -vv -L \
+            -X PUT \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Authorization: Bearer ${{ env.GITHUB_TOKEN }}"\
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/4-ANO-COMP/$repo_name/branches/homolog/protection" \
+            -d '{
+              "required_status_checks": {
+                "strict": true,
+                "contexts": ["check_owner/Check & Validate PR Owner"]
+              },
+              "enforce_admins": false,
+              "required_pull_request_reviews": {
+                "dismiss_stale_reviews": false,
+                "require_code_owner_reviews": false,
+                "required_approving_review_count": 1,
+                "require_last_push_approval": false
+              },
+              "restrictions": null,
+              "required_linear_history": false,
+              "allow_force_pushes": false,
+              "allow_deletions": false,
+              "block_creations": false,
+              "required_conversation_resolution": false,
+              "lock_branch": false,
+              "allow_fork_syncing": false
+            }'
+      - name: Create Production
+        env: 
+          GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
+        run: |
+          
+          echo "Creating Production Branch"
+
+          echo "Getting SHA from dev branch"
+          sha_ref=$(gh api \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "/repos/4-ANO-COMP/$repo_name/git/ref/heads/dev" | jq -r '.object.sha')
+          
+          echo "Creating Production Branch"
+          gh api \
+            --method POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "/repos/4-ANO-COMP/$repo_name/git/refs" \
+            -f ref='refs/heads/prod' \
+            -f sha=$sha_ref
+
+
+      - name: Add Branch Protection Production
+        if: startsWith(needs.process_issue.outputs.privacy_type, 'public')
+        run: |
+          echo "Adding Branch Protection Production"
+          
+          curl -vv -L \
+            -X PUT \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Authorization: Bearer ${{ env.GITHUB_TOKEN }}"\
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/4-ANO-COMP/$repo_name/branches/prod/protection" \
+            -d '{
+              "required_status_checks": {
+                "strict": true,
+                "contexts": ["check_owner/Check & Validate PR Owner"]
+              },
+              "enforce_admins": false,
+              "required_pull_request_reviews": {
+                "dismiss_stale_reviews": true,
+                "require_code_owner_reviews": false,
+                "required_approving_review_count": 1,
+                "require_last_push_approval": false
+              },
+              "restrictions": null,
+              "required_linear_history": false,
+              "allow_force_pushes": false,
+              "allow_deletions": false,
+              "block_creations": false,
+              "required_conversation_resolution": false,
+              "lock_branch": false,
+              "allow_fork_syncing": false
+            }'
+
+      - name: Create environments
+        if: startsWith(needs.process_issue.outputs.privacy_type, 'public')
+        env: 
+          GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
+        run: |
+          gh api --method PUT -H "Accept: application/vnd.github+json" \
+          repos/4-ANO-COMP/$repo_name/environments/dev
+
+          gh api --method PUT -H "Accept: application/vnd.github+json" \
+          repos/4-ANO-COMP/$repo_name/environments/homolog
+        
+          gh api --method PUT -H "Accept: application/vnd.github+json" \
+          repos/4-ANO-COMP/$repo_name/environments/prod
+
+      - name: Getting team id
+        if: startsWith(needs.process_issue.outputs.privacy_type, 'public')
+        env: 
+          GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
+        run: |
+          echo "Getting team id"
+
+          team_id=$(gh api \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "/orgs/4-ANO-COMP/teams/Admins-repo" | jq -r '.id')
+
+          echo "Team id: $team_id"
+          echo "team_id=$team_id" >> $GITHUB_ENV
+
+      - name: Assign reviewers to Production environment
+        if: startsWith(needs.process_issue.outputs.privacy_type, 'public')
+        run: |
+
+          
+
+          echo "Assigning reviewer to $repo_name"
+
+          curl -L \
+            -X PUT \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Authorization: Bearer ${{ env.GITHUB_TOKEN }}"\
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/4-ANO-COMP/$repo_name/environments/prod" \
+            -d '{"reviewers":[{"type":"Team","id":${{ env.team_id }}}]}'
+
+      - name: End message
+        run: |
+          echo "Finished creating repo"
+
+          message="Thanks for using the Issue to repo creation! :smile: Now you can find your repo at [${{needs.process_issue.outputs.project_name}}](https://github.com/4-ANO-COMP/${{needs.process_issue.outputs.project_name}}) :rocket:"
+          
+          echo "message=$message" >> $GITHUB_ENV
+
+    outputs:
+      message: ${{ env.message }}
+
+  close_issue:
+    needs: create_repo
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get Token
+        id: get_workflow_token
+        uses: peter-murray/workflow-application-token-action@v2
+        with:
+          application_id: ${{ secrets.SETUP_APP_ID }}
+          application_private_key: ${{ secrets.SETUP_APP_PRIVATE_KEY }}
+
+      - name: Set Token
+        run: |
+          echo "GITHUB_TOKEN=${{ steps.get_workflow_token.outputs.token }}" >> $GITHUB_ENV
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Close Issue
+        run: |
+          echo "Closing issue"
+          echo "Issue number: ${{ github.event.issue.number }}"
+          echo "Message: ${{ needs.create_repo.outputs.message }}"
+
+          gh issue close ${{ github.event.issue.number }} -c "${{ needs.create_repo.outputs.message }}"
