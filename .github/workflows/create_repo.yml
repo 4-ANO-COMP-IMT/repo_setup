@@ -28,7 +28,7 @@ jobs:
       - name: Check Organization Membership
         run: |
           USERNAME=${{ github.event.issue.user.login }}
-          ORG_NAME="4-ANO-COMP"
+          ORG_NAME="4-ANO-COMP-IMT"
           
           # get info from gh api
           response=$(gh api "/orgs/$ORG_NAME/members/$USERNAME" | jq -r '.message')
@@ -110,7 +110,7 @@ jobs:
         run: |
             USERNAME=${{ github.event.issue.user.login }}
 
-            verify_repo=$(gh api /repos/4-ANO-COMP/${{needs.process_issue.outputs.project_name}} | jq -r '.message')
+            verify_repo=$(gh api /repos/4-ANO-COMP-IMT/${{needs.process_issue.outputs.project_name}} | jq -r '.message')
             echo "Verify Repo: $verify_repo"
             if [ "$verify_repo" != "Not Found" ]; then
               echo "Repo already exists"
@@ -129,17 +129,17 @@ jobs:
           echo "Project Template: ${{needs.process_issue.outputs.project_template}}"
 
           if [ "${{needs.process_issue.outputs.project_template}}" == "None" ]; then
-            gh repo create 4-ANO-COMP/${{needs.process_issue.outputs.project_name}} --${{needs.process_issue.outputs.privacy_type}} -d "${{needs.process_issue.outputs.description}}" --add-readme
+            gh repo create 4-ANO-COMP-IMT/${{needs.process_issue.outputs.project_name}} --${{needs.process_issue.outputs.privacy_type}} -d "${{needs.process_issue.outputs.description}}" --add-readme
           else
-            gh repo create 4-ANO-COMP/${{needs.process_issue.outputs.project_name}} --${{needs.process_issue.outputs.privacy_type}} -d "${{needs.process_issue.outputs.description}}" --template 4-ANO-COMP/${{needs.process_issue.outputs.project_template}}
+            gh repo create 4-ANO-COMP-IMT/${{needs.process_issue.outputs.project_name}} --${{needs.process_issue.outputs.privacy_type}} -d "${{needs.process_issue.outputs.description}}" --template 4-ANO-COMP-IMT/${{needs.process_issue.outputs.project_template}}
             fi
-          gh repo edit 4-ANO-COMP/${{needs.process_issue.outputs.project_name}} --enable-issues --delete-branch-on-merge
+          gh repo edit 4-ANO-COMP-IMT/${{needs.process_issue.outputs.project_name}} --enable-issues --delete-branch-on-merge
 
           if [ "${{needs.process_issue.outputs.team}}" != "None" ]; then
-            gh api -X PUT /orgs/4-ANO-COMP/teams/${{needs.process_issue.outputs.team}}/repos/4-ANO-COMP/${{needs.process_issue.outputs.project_name}} --raw-field "permission=push"
+            gh api -X PUT /orgs/4-ANO-COMP-IMT/teams/${{needs.process_issue.outputs.team}}/repos/4-ANO-COMP-IMT/${{needs.process_issue.outputs.project_name}} --raw-field "permission=push"
           fi
           
-          gh api -X PUT /orgs/4-ANO-COMP/teams/Admins-repo/repos/4-ANO-COMP/${{needs.process_issue.outputs.project_name}} --raw-field "permission=admin"
+          gh api -X PUT /orgs/4-ANO-COMP-IMT/teams/Admins-repo/repos/4-ANO-COMP-IMT/${{needs.process_issue.outputs.project_name}} --raw-field "permission=admin"
           
           USERNAME=${{ github.event.issue.user.login }}
 
@@ -147,7 +147,7 @@ jobs:
             --method PUT \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            /repos/4-ANO-COMP/${{needs.process_issue.outputs.project_name}}/collaborators/$USERNAME\
+            /repos/4-ANO-COMP-IMT/${{needs.process_issue.outputs.project_name}}/collaborators/$USERNAME\
             -f permission='admin' 
 
 
@@ -155,7 +155,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           token: ${{ env.GITHUB_TOKEN }}
-          repository: "4-ANO-COMP/${{needs.process_issue.outputs.project_name}}"
+          repository: "4-ANO-COMP-IMT/${{needs.process_issue.outputs.project_name}}"
 
       - name: Add Branch Protection Dev
         if: ${{startsWith(needs.process_issue.outputs.privacy_type, 'public')}}
@@ -166,7 +166,7 @@ jobs:
             -H "Accept: application/vnd.github.v3+json" \
             -H "Authorization: Bearer ${{ env.GITHUB_TOKEN }}"\
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            "https://api.github.com/repos/4-ANO-COMP/$repo_name/branches/dev/protection" \
+            "https://api.github.com/repos/4-ANO-COMP-IMT/$repo_name/branches/dev/protection" \
             -d '{
               "required_status_checks": {
                 "strict": true,
@@ -200,14 +200,14 @@ jobs:
           sha_ref=$(gh api \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            "/repos/4-ANO-COMP/$repo_name/git/ref/heads/dev" | jq -r '.object.sha')
+            "/repos/4-ANO-COMP-IMT/$repo_name/git/ref/heads/dev" | jq -r '.object.sha')
           
           echo "Creating Production Branch"
           gh api \
             --method POST \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            "/repos/4-ANO-COMP/$repo_name/git/refs" \
+            "/repos/4-ANO-COMP-IMT/$repo_name/git/refs" \
             -f ref='refs/heads/prod' \
             -f sha=$sha_ref
 
@@ -222,7 +222,7 @@ jobs:
             -H "Accept: application/vnd.github.v3+json" \
             -H "Authorization: Bearer ${{ env.GITHUB_TOKEN }}"\
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            "https://api.github.com/repos/4-ANO-COMP/$repo_name/branches/prod/protection" \
+            "https://api.github.com/repos/4-ANO-COMP-IMT/$repo_name/branches/prod/protection" \
             -d '{
               "required_status_checks": {
                 "strict": true,
@@ -251,10 +251,10 @@ jobs:
           GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
         run: |
           gh api --method PUT -H "Accept: application/vnd.github+json" \
-          repos/4-ANO-COMP/$repo_name/environments/dev
+          repos/4-ANO-COMP-IMT/$repo_name/environments/dev
 
           gh api --method PUT -H "Accept: application/vnd.github+json" \
-          repos/4-ANO-COMP/$repo_name/environments/prod
+          repos/4-ANO-COMP-IMT/$repo_name/environments/prod
 
       - name: Getting team id
         if: startsWith(needs.process_issue.outputs.privacy_type, 'public')
@@ -266,7 +266,7 @@ jobs:
           team_id=$(gh api \
             -H "Accept: application/vnd.github.v3+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            "/orgs/4-ANO-COMP/teams/Admins-repo" | jq -r '.id')
+            "/orgs/4-ANO-COMP-IMT/teams/Admins-repo" | jq -r '.id')
 
           echo "Team id: $team_id"
           echo "team_id=$team_id" >> $GITHUB_ENV
@@ -284,14 +284,14 @@ jobs:
             -H "Accept: application/vnd.github.v3+json" \
             -H "Authorization: Bearer ${{ env.GITHUB_TOKEN }}"\
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            "https://api.github.com/repos/4-ANO-COMP/$repo_name/environments/prod" \
+            "https://api.github.com/repos/4-ANO-COMP-IMT/$repo_name/environments/prod" \
             -d '{"reviewers":[{"type":"Team","id":${{ env.team_id }}}]}'
 
       - name: End message
         run: |
           echo "Finished creating repo"
 
-          message="Obrigado por utiliza o repo_setup :smile: Agora você pode encontrar seu repo em [${{needs.process_issue.outputs.project_name}}](https://github.com/4-ANO-COMP/${{needs.process_issue.outputs.project_name}}) :rocket:"
+          message="Obrigado por utiliza o repo_setup :smile: Agora você pode encontrar seu repo em [${{needs.process_issue.outputs.project_name}}](https://github.com/4-ANO-COMP-IMT/${{needs.process_issue.outputs.project_name}}) :rocket:"
           
           echo "message=$message" >> $GITHUB_ENV
 
