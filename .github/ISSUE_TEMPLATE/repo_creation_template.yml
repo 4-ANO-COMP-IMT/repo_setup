@@ -29,7 +29,13 @@ body:
       label: team
       description: Qual equipe será responsável por este projeto?
       options:
-        - grupo_1
-        - grupo_2
+        - DevMaua
+        - Duplinha
+        - IntelliJIDEAUltimate
+        - MetaHB20
+        - NawatGames
+        - Professores
+        - SITIO
+        - Toei
     validations:
       required: false
