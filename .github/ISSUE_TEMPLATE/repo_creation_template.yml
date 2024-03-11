@@ -33,9 +33,11 @@ body:
         - Duplinha
         - IntelliJIDEAUltimate
         - MetaHB20
-        - NawatGames
+        - BGC
         - Professores
         - SITIO
         - Toei
+        - EquipeRocket
+        - VasCodedaGama
     validations:
       required: false
