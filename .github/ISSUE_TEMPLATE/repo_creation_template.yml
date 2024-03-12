@@ -39,5 +39,6 @@ body:
         - Toei
         - EquipeRocket
         - VasCodedaGama
+        - AC2
     validations:
       required: false
