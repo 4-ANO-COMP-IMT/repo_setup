@@ -40,5 +40,6 @@ body:
         - EquipeRocket
         - VasCodedaGama
         - AC2
+        - OsCasas
     validations:
       required: false
