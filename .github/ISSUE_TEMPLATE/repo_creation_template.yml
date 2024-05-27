@@ -29,7 +29,6 @@ body:
       label: team
       description: Qual equipe será responsável por este projeto?
       options:
-        - DevMaua
         - Duplinha
         - IntelliJIDEAUltimate
         - MetaHB20
@@ -40,6 +39,5 @@ body:
         - EquipeRocket
         - VasCodedaGama
         - AC2
-        - OsCasas
     validations:
       required: false
